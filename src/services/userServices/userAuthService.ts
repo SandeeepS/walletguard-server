@@ -4,13 +4,23 @@ import type { IUserAuthService } from "../../interfaces/services/IUserAuthServic
 import type {
   INewDetails,
   ISingUp,
+  IUserLogin,
 } from "../../interfaces/dataContracts/user/services/IService.dto";
 import type { UserInterface } from "../../interfaces/models/IUser";
+import { LoginValidation } from "../../utils/validator";
+import { STATUS_CODES } from "../../constants/httpStatusCodes";
+import type { IEncrypt } from "../../utils/comparePassword";
 
 class UserAuthService implements IUserAuthService {
-  constructor(private _userRepository: IUserRepository) {}
+  constructor(
+    private _userRepository: IUserRepository
+  ) // private _encrypt: IEncrypt
+  {
+    this._userRepository = _userRepository;
+    // this._encrypt = _encrypt;
+  }
 
-  async userRegister(userData: ISingUp): Promise<UserInterface | null> {
+  async signup(userData: ISingUp): Promise<UserInterface | null> {
     try {
       const { email, name, phone, password, cpassword } = userData;
       //   const isValid = SignUpValidation(
@@ -52,7 +62,7 @@ class UserAuthService implements IUserAuthService {
       };
 
       const user = await this._userRepository.saveUser(newDetails);
-    
+
       return user;
 
       //   const otp = await this._email.generateAndSendOTP(email);
@@ -67,7 +77,30 @@ class UserAuthService implements IUserAuthService {
 
       //   return savedTempUser;
     } catch (error) {
-      console.log("Error in userRegister in the userAuthService", error);
+      console.log("Error in signup in the userAuthService", error);
+      throw error;
+    }
+  }
+
+  async login(data: IUserLogin): Promise<UserInterface | null> {
+    try {
+      const { email, password } = data;
+      const check = LoginValidation(email, password);
+      if (check) {
+        const user = await this._userRepository.emailExistCheck({ email });
+        console.log(
+          "accessed user details from the userAuthService, in the login function is ",
+          user
+        );
+        return user;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.log(
+        "Error occurred in the userLogin in the userAuthService",
+        error
+      );
       throw error;
     }
   }

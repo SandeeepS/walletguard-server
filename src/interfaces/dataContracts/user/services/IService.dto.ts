@@ -16,3 +16,10 @@ export interface ISingUp {
   password: string;
   cpassword: string;
 }
+
+
+export interface IUserLogin {
+  email: string;
+  password: string;
+  role: string;
+}

@@ -24,13 +24,11 @@ const uri: string =
   }
 })();
 
-app.use("/api/user",userRouter)
+app.use("/api/user", userRouter);
 
 app.get("/", (req, res) => {
   res.status(200).send("Server is running ");
 });
-
-
 
 server.listen(PORT, () => {
   console.log(`Server is running on PORT : ${PORT}`);
