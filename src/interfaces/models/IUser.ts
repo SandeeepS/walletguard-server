@@ -11,3 +11,4 @@ export interface UserInterface extends Document {
   isBlocked: boolean;
   isDeleted: boolean;
 }
+

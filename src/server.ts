@@ -4,6 +4,7 @@ import express from "express";
 import http from "http";
 import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
+import userRouter from "./routes/userRoutes";
 const app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
@@ -23,9 +24,13 @@ const uri: string =
   }
 })();
 
+app.use("/api/user",userRouter)
+
 app.get("/", (req, res) => {
   res.status(200).send("Server is running ");
 });
+
+
 
 server.listen(PORT, () => {
   console.log(`Server is running on PORT : ${PORT}`);
