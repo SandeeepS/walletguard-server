@@ -6,12 +6,14 @@ import UserService from "../services/userServices/userService";
 import UserController from "../controllers/userController/userController";
 import Encrypt from "../utils/comparePassword";
 import { CreateJWT } from "../utils/generateTokens";
+import WalletRepository from "../repositories/userRepository/walletRepository";
 
 const userRouter: Router = express.Router();
 const userRepository = new UserRepository();
+const walletRepository = new WalletRepository();
 const createJWT = new CreateJWT();
 const encrypt = new Encrypt();
-const userAuthService = new UserAuthService(userRepository,createJWT,encrypt);
+const userAuthService = new UserAuthService(userRepository,walletRepository,createJWT,encrypt);
 const userService = new UserService(); 
 const controller = new UserController();
 const authController = new UserAuthController(userAuthService,userService);
