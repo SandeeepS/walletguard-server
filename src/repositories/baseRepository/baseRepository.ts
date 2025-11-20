@@ -27,4 +27,28 @@ export abstract class BaseRepository<T> implements IBaseRepository<T> {
       .session(session ?? null)
       .exec()) as T;
   }
+
+  async findById(id: any, session?: ClientSession): Promise<T | null> {
+    return this.model
+      .findById(id)
+      .session(session ?? null)
+      .exec();
+  }
+
+  async findOneAndUpdate(
+    filter: Partial<Record<keyof T, any>>,
+    update: any,
+    opts: { new?: boolean; upsert?: boolean } = { new: true },
+    session?: ClientSession
+  ): Promise<T | null> {
+    const options = { session: session ?? null, ...opts };
+    return this.model.findOneAndUpdate(filter as any, update, options).exec();
+  }
+
+  async deleteById(id: any, session?: ClientSession): Promise<void> {
+    await this.model
+      .deleteOne({ _id: id } as any)
+      .session(session ?? null)
+      .exec();
+  }
 }

@@ -6,14 +6,19 @@ const walletSchema: Schema<WalletInterface> = new Schema(
     userId: {
       type: Schema.Types.ObjectId,
       required: true,
+      unique:true,
+      
     },
     balance: {
       type: Number,
       required: true,
+      default:0,
+      min:0,
     },
     currency: {
       type: String,
       default: "INR",
+      required:true,
     },
     isDeleted: {
       type: Boolean,

@@ -1,6 +1,5 @@
 import Cryptr from "cryptr";
 import type { IUserRepository } from "../../interfaces/repositories/IUserRepository";
-import type { IUserAuthService } from "../../interfaces/services/IUserAuthService";
 import type {
   INewDetails,
   ISingUp,
@@ -15,8 +14,9 @@ import type { IEncrypt } from "../../utils/comparePassword";
 import type { ICreateJWT } from "../../utils/generateTokens";
 import mongoose from "mongoose";
 import type { IWalletRepository } from "../../interfaces/repositories/IWalletRepository";
+import type { IAuthService } from "../../interfaces/services/IAuthService";
 
-class UserAuthService implements IUserAuthService {
+class AuthService implements IAuthService {
   constructor(
     private _userRepository: IUserRepository,
     private _walletRepository: IWalletRepository,
@@ -207,4 +207,4 @@ class UserAuthService implements IUserAuthService {
     }
   }
 }
-export default UserAuthService;
+export default AuthService;
