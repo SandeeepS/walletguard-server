@@ -1,7 +1,7 @@
-import type { ISingUp, IUserLogin } from "../dataContracts/user/services/IService.dto";
+import type { ISingUp, IUserLogin, IUserLoginResponse, IUserSingupResponse } from "../dataContracts/user/services/IService.dto";
 import type { UserInterface } from "../models/IUser";
 
 export interface IUserAuthService {
-    signup(userData: ISingUp): Promise<UserInterface | null>
-     login(data: IUserLogin): Promise<UserInterface | null>
+    signup(userData: ISingUp): Promise<IUserSingupResponse | null>
+     login(data: IUserLogin): Promise<IUserLoginResponse | null>
 }
