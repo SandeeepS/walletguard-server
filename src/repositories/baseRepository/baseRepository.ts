@@ -1,4 +1,5 @@
 import { Model, type ClientSession } from "mongoose";
+import type { UpdateQuery } from "mongoose";
 
 export interface IBaseRepository<T> {}
 
@@ -38,11 +39,22 @@ export abstract class BaseRepository<T> implements IBaseRepository<T> {
   async findOneAndUpdate(
     filter: Partial<Record<keyof T, any>>,
     update: any,
-    opts: { new?: boolean; upsert?: boolean } = { new: true },
     session?: ClientSession
   ): Promise<T | null> {
-    const options = { session: session ?? null, ...opts };
+    const options = { session: session ?? null };
     return this.model.findOneAndUpdate(filter as any, update, options).exec();
+  }
+
+  async findByIdAndUpdate(
+    id: any,
+    update: UpdateQuery<T>,
+    session?: ClientSession
+  ): Promise<T | null> {
+    const options = { session: session ?? null };
+
+    return this.model
+      .findByIdAndUpdate(id, update, options)
+      .exec() as Promise<T | null>;
   }
 
   async deleteById(id: any, session?: ClientSession): Promise<void> {

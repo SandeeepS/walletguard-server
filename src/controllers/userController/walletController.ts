@@ -70,6 +70,23 @@ class WalletController implements IWalletController {
       return res.status(500).json({ success: false, message: "Server error" });
     }
   }
+
+  async balance (req:Request,res:Response,next:NextFunction){
+    try{
+      const { userId } = req.query;
+      const result = await this._walletService.getBalance(userId as string);
+      if(result){
+        res.status(200).json({success:true,message:"balance found ",data:result});
+      }
+
+
+    }catch(error){
+        if(error){
+            res.status(402).json({success:false,message:error})
+        }
+        res.status(500).json({success:false,message : "Server error"});
+    }
+  }
 }
 
 export default WalletController;

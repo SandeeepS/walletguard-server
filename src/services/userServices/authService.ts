@@ -85,12 +85,19 @@ class AuthService implements IAuthService {
           }
           createdUser = user;
 
-          await this._walletRepository.createWallet(
+          const wallet = await this._walletRepository.createWallet(
             {
               userId: user._id,
               balance: 0, // paise
               currency: "INR",
             },
+            session
+          );
+
+          if (!wallet) throw new Error("Failed to create wallet");
+          await this._userRepository.setWalletId(
+            user._id.toString(),
+            wallet._id.toString(),
             session
           );
         },

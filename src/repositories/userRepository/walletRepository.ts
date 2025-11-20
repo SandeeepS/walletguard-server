@@ -22,7 +22,8 @@ class WalletRepository
     userId: string,
     session?: ClientSession
   ): Promise<WalletInterface | null> {
-    return this.findOne({ userId } as any, session);
+    console.log("userId in the findByUserId ind the walletRepository",userId);
+    return this.findOne({ userId: userId } as any, session);
   }
 
   async incrementBalance(
@@ -33,7 +34,6 @@ class WalletRepository
     return this.findOneAndUpdate(
       { userId } as any,
       { $inc: { balance: amount } },
-      { new: true },
       session
     );
   }
@@ -45,7 +45,7 @@ class WalletRepository
   ): Promise<WalletInterface | null> {
     const filter = { userId, balance: { $gte: amount } } as any;
     const update = { $inc: { balance: -amount } };
-    return this.findOneAndUpdate(filter, update, { new: true }, session);
+    return this.findOneAndUpdate(filter, update, session);
   }
 }
 

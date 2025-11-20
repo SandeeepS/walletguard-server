@@ -161,8 +161,12 @@ class WalletService implements IWalletService {
     userId: string
   ): Promise<{ balance: number; currency: string } | null> {
     const wallet = await this._walletRepository.findByUserId(userId);
+
+      console.log("wallet amount result is ",wallet);
     if (!wallet) return null;
-    return { balance: wallet.balance, currency: wallet.currency };
+    const balanceInRupees = wallet.balance / 100;
+
+    return { balance: balanceInRupees, currency: wallet.currency };
   }
 }
 

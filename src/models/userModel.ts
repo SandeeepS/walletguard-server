@@ -32,6 +32,9 @@ const userSchema: Schema<UserInterface> = new Schema(
       default: "user",
       required: true,
     },
+    walletId: {
+      type: Schema.Types.ObjectId,
+    },
     isBlocked: {
       type: Boolean,
       default: false,

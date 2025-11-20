@@ -31,6 +31,6 @@ userRouter.post('/login',async(req:Request,res:Response,next:NextFunction) => aw
 
 userRouter.post('/deposit',async(req:Request,res:Response,next:NextFunction) => await walletController.deposit(req,res,next));
 userRouter.post('/withdraw',async(req:Request,res:Response,next:NextFunction) => await walletController.withdraw(req,res,next));
-
+userRouter.get('/balance',async(req:Request,res:Response,next:NextFunction) => await walletController.balance(req,res,next));
 
 export default userRouter;
