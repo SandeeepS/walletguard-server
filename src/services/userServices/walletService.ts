@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
 import type { TransactionInterface } from "../../interfaces/models/ITransaction";
 import type { IWalletService } from "../../interfaces/services/IWalletService";
-import { v4 as uuidv4 } from "uuid";
 import type { ITransactionRepository } from "../../interfaces/repositories/ITransactionRepository";
 import type { IWalletRepository } from "../../interfaces/repositories/IWalletRepository";
 import type { WalletInterface } from "../../interfaces/models/IWallet";
 import type { IUserRepository } from "../../interfaces/repositories/IUserRepository";
-
+import { generateTransactionId } from "../../utils/generate";
 
 // this serviec layer is for wallet operations
 class WalletService implements IWalletService {
@@ -27,7 +26,7 @@ class WalletService implements IWalletService {
     if (!Number.isFinite(amountPaise) || amountPaise <= 0) {
       throw new Error("Amount must be a positive number (in paise).");
     }
-    const transactionId = uuidv4();
+    const transactionId = generateTransactionId();
     const session = await mongoose.startSession();
     try {
       let createdTransaction: TransactionInterface | null = null;
@@ -131,8 +130,8 @@ class WalletService implements IWalletService {
         if (!updated) throw new Error("Insufficient balance");
 
         const after = updated.balance;
-        const transactionId = uuidv4();
-
+        const transactionId = generateTransactionId();
+        console.log("transactionId is ", transactionId);
         const newUserId = new mongoose.Types.ObjectId(userId);
         transaction = await this._transactionRepository.createTransaction(
           {
@@ -157,7 +156,7 @@ class WalletService implements IWalletService {
     }
   }
 
-  //for getting the balace amount 
+  //for getting the balace amount
   async getBalance(
     userId: string
   ): Promise<{ balance: number; currency: string } | null> {
@@ -168,8 +167,7 @@ class WalletService implements IWalletService {
     return { balance: balanceInRupees, currency: wallet.currency };
   }
 
-
-  //for gettin the transaction history of the user 
+  //for gettin the transaction history of the user
   async getTransactionHistory(
     userId: string
   ): Promise<TransactionInterface[] | null> {
