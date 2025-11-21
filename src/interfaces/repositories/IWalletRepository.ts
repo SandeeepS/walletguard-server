@@ -6,4 +6,5 @@ export interface IWalletRepository{
     findByUserId(userId: string,session?: ClientSession): Promise<WalletInterface | null>
     incrementBalance(userId: string,amount: number,session?: ClientSession): Promise<WalletInterface | null> 
     decrementBalance(userId: string,amount: number,session?: ClientSession): Promise<WalletInterface | null>
+    getWalletDetails(walletId: string,session?: ClientSession): Promise<WalletInterface | null> 
 }

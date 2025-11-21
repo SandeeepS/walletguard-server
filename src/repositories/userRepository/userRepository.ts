@@ -1,6 +1,7 @@
 import type { ClientSession, ObjectId } from "mongoose";
 import type {
   IEmailExistCheck,
+  IGetUserDetails,
   ISaveUser,
 } from "../../interfaces/dataContracts/user/reporitory/IRepository.dto";
 import type { UserInterface } from "../../interfaces/models/IUser";
@@ -37,8 +38,28 @@ class UserRepository
     userId: string,
     walletId: string,
     session?: ClientSession
-  ):Promise<UserInterface | null> {
-    return this.findByIdAndUpdate(userId, { $set: { walletId : walletId} }, session);
+  ): Promise<UserInterface | null> {
+    return this.findByIdAndUpdate(
+      userId,
+      { $set: { walletId: walletId } },
+      session
+    );
+  }
+
+  async getUserDetails(
+    userId:string,
+    session?: ClientSession
+  ): Promise<UserInterface | null> {
+    try {
+      const result = await this.findById(userId, session);
+      return result;
+    } catch (error) {
+      console.log(
+        "error occured while fechting the user details in the userRepositroy",
+        error
+      );
+      throw error;
+    }
   }
 }
 

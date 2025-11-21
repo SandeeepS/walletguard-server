@@ -5,14 +5,17 @@ import { v4 as uuidv4 } from "uuid";
 import type { ITransactionRepository } from "../../interfaces/repositories/ITransactionRepository";
 import type { IWalletRepository } from "../../interfaces/repositories/IWalletRepository";
 import type { WalletInterface } from "../../interfaces/models/IWallet";
+import type { IUserRepository } from "../../interfaces/repositories/IUserRepository";
 
 class WalletService implements IWalletService {
   constructor(
     private _transactionRepository: ITransactionRepository,
-    private _walletRepository: IWalletRepository
+    private _walletRepository: IWalletRepository,
+    private _userRepository: IUserRepository
   ) {
     this._transactionRepository = _transactionRepository;
     this._walletRepository = _walletRepository;
+    this._userRepository = _userRepository;
   }
 
   async deposit(
@@ -105,38 +108,45 @@ class WalletService implements IWalletService {
 
   async withdraw(
     userId: string,
-    amountPaise: number
+    amount: number
   ): Promise<WalletInterface | null> {
-    if (!Number.isFinite(amountPaise) || amountPaise <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error("Invalid withdrawal amount");
     }
-
     const session = await mongoose.startSession();
 
     try {
       let transaction = null;
 
       await session.withTransaction(async () => {
-        const wallet = await this._walletRepository.findByUserId(
-          userId,
+        const user = await this._userRepository.getUserDetails(userId, session);
+        if (!user) {
+          throw new Error("user not found");
+        }
+        const walletId = user.walletId.toString();
+        const wallet = await this._walletRepository.getWalletDetails(
+          walletId,
           session
         );
+        console.log("wallet Details got is", wallet);
         if (!wallet) throw new Error("Wallet not found");
-
         const before = wallet.balance;
-
+        const amountPaise = amount * 100;
         const updated = await this._walletRepository.decrementBalance(
           userId,
           amountPaise,
           session
         );
-
+        console.log("upedfasdfsda", updated);
         if (!updated) throw new Error("Insufficient balance");
 
         const after = updated.balance;
+        const transactionId = uuidv4();
+
         const newUserId = new mongoose.Types.ObjectId(userId);
         transaction = await this._transactionRepository.createTransaction(
           {
+            transactionId,
             userId: newUserId,
             walletId: updated._id,
             type: "WITHDRAW",
@@ -161,11 +171,9 @@ class WalletService implements IWalletService {
     userId: string
   ): Promise<{ balance: number; currency: string } | null> {
     const wallet = await this._walletRepository.findByUserId(userId);
-
-      console.log("wallet amount result is ",wallet);
+    console.log("wallet amount result is ", wallet);
     if (!wallet) return null;
     const balanceInRupees = wallet.balance / 100;
-
     return { balance: balanceInRupees, currency: wallet.currency };
   }
 }

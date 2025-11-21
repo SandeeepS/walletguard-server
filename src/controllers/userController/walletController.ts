@@ -44,47 +44,52 @@ class WalletController implements IWalletController {
     }
   }
 
-  async withdraw(req: Request, res: Response,next:NextFunction) {
-    try {
-      const { userId } = req.body;
-      const amount = Number(req.body.amount);
+async withdraw(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { userId, amount } = req.body;
+    console.log("userId and amount in the walletController ", userId, amount);
 
-      if (!userId)
-        return res
-          .status(401)
-          .json({ success: false, message: "Unauthorized" });
-      if (!amount || amount <= 0)
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid amount" });
-
-      const tx = await this._walletService.withdraw(userId, toPaise(amount));
-      return res.status(200).json({ success: true, transaction: tx });
-    } catch (err) {
-      if (err) {
-        return res.status(402).json({ success: false, message: err });
-      }
-      if (err) {
-        return res.status(400).json({ success: false, message: err });
-      }
-      return res.status(500).json({ success: false, message: "Server error" });
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-  }
 
-  async balance (req:Request,res:Response,next:NextFunction){
-    try{
+    const amountNumber = Number(amount);
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid amount" });
+    }
+
+
+    const response = await this._walletService.withdraw(userId, amountNumber);
+
+    if (response) {
+      return res.status(200).json({ success: true, data: response });
+    }
+    return res.status(400).json({
+      success: false,
+      message: "Withdrawal failed (insufficient funds or wallet not found)",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("withdraw handler error:", err);
+    return res.status(500).json({ success: false, message });
+  }
+}
+
+
+  async balance(req: Request, res: Response, next: NextFunction) {
+    try {
       const { userId } = req.query;
       const result = await this._walletService.getBalance(userId as string);
-      if(result){
-        res.status(200).json({success:true,message:"balance found ",data:result});
+      if (result) {
+        res
+          .status(200)
+          .json({ success: true, message: "balance found ", data: result });
       }
-
-
-    }catch(error){
-        if(error){
-            res.status(402).json({success:false,message:error})
-        }
-        res.status(500).json({success:false,message : "Server error"});
+    } catch (error) {
+      if (error) {
+        res.status(402).json({ success: false, message: error });
+      }
+      res.status(500).json({ success: false, message: "Server error" });
     }
   }
 }
