@@ -1,8 +1,11 @@
-import type { IEmailExistCheck, ISaveUser } from "../dataContracts/user/reporitory/IRepository.dto";
+import type { ClientSession } from "mongoose";
+import type { IEmailExistCheck, IGetUserDetails, ISaveUser } from "../dataContracts/user/reporitory/IRepository.dto";
 import type { UserInterface } from "../models/IUser";
 
 export interface IUserRepository {
-   emailExistCheck(data: IEmailExistCheck): Promise<UserInterface | null>
-   saveUser(newDetails: ISaveUser): Promise<UserInterface | null> 
+   emailExistCheck(data: IEmailExistCheck,session?:ClientSession): Promise<UserInterface | null> 
+   saveUser(newDetails: ISaveUser,session?: ClientSession): Promise<UserInterface | null> 
+   setWalletId(userId: string,walletId: string,session?: ClientSession ):Promise<UserInterface | null> 
+   getUserDetails(userId:string,session?: ClientSession): Promise<UserInterface | null> 
 }
 

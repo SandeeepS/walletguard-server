@@ -7,6 +7,7 @@ export interface UserInterface extends Document {
   email: string;
   phoneNumber: string;
   role: string;
+  walletId:mongoose.Types.ObjectId;
   profilePicture: string;
   isBlocked: boolean;
   isDeleted: boolean;
