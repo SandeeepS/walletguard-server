@@ -176,6 +176,21 @@ class WalletService implements IWalletService {
     const balanceInRupees = wallet.balance / 100;
     return { balance: balanceInRupees, currency: wallet.currency };
   }
+
+  async getTransactionHistory(
+    userId: string
+  ): Promise<TransactionInterface[] | null> {
+    try {
+      const result = await this._transactionRepository.getHistory(userId);
+      return result;
+    } catch (error) {
+      console.log(
+        "error occured while getting the history in the walletService form getTransactionHistory funciton",
+        error
+      );
+      throw error;
+    }
+  }
 }
 
 export default WalletService;
