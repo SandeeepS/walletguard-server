@@ -1,13 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
-import type { IUserAuthController } from "../../interfaces/controllers/IUserAuthController";
-import type { IUserAuthService } from "../../interfaces/services/IUserAuthService";
-import type { IUserService } from "../../interfaces/services/IUserService";
+import type { IUserService } from "../../interfaces/services/IService";
 import { STATUS_CODES } from "../../constants/httpStatusCodes";
+import type { IAuthController } from "../../interfaces/controllers/IAuthController";
+import type { IAuthService } from "../../interfaces/services/IAuthService";
 const { BAD_REQUEST, OK, UNAUTHORIZED, NOT_FOUND } = STATUS_CODES;
 
-class UserAuthController implements IUserAuthController {
+class AuthController implements IAuthController {
   constructor(
-    private _userAuthService: IUserAuthService,
+    private _userAuthService: IAuthService,
     private _userServices: IUserService
   ) {}
 
@@ -124,4 +124,4 @@ class UserAuthController implements IUserAuthController {
   }
 }
 
-export default UserAuthController;
+export default AuthController;

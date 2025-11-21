@@ -1,4 +1,4 @@
-import type { IUserController } from "../../interfaces/controllers/IUserController";
+import type { IUserController } from "../../interfaces/controllers/IController";
 
 class UserController implements IUserController {
     constructor(){

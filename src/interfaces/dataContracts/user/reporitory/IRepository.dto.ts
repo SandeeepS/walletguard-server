@@ -10,3 +10,6 @@ export interface IEmailExistCheck {
   email: string;
 }
 
+export interface IGetUserDetails{
+    userId:string
+}

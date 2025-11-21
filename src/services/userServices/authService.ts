@@ -1,6 +1,5 @@
 import Cryptr from "cryptr";
 import type { IUserRepository } from "../../interfaces/repositories/IUserRepository";
-import type { IUserAuthService } from "../../interfaces/services/IUserAuthService";
 import type {
   INewDetails,
   ISingUp,
@@ -13,89 +12,127 @@ import { LoginValidation, SignUpValidation } from "../../utils/validator";
 import { STATUS_CODES } from "../../constants/httpStatusCodes";
 import type { IEncrypt } from "../../utils/comparePassword";
 import type { ICreateJWT } from "../../utils/generateTokens";
+import mongoose from "mongoose";
+import type { IWalletRepository } from "../../interfaces/repositories/IWalletRepository";
+import type { IAuthService } from "../../interfaces/services/IAuthService";
 
-class UserAuthService implements IUserAuthService {
+class AuthService implements IAuthService {
   constructor(
     private _userRepository: IUserRepository,
+    private _walletRepository: IWalletRepository,
     private _createJWT: ICreateJWT,
     private _encrypt: IEncrypt
   ) {
     this._userRepository = _userRepository;
+    this._walletRepository = _walletRepository;
     this._createJWT = _createJWT;
     this._encrypt = _encrypt;
   }
 
   async signup(userData: ISingUp): Promise<IUserSingupResponse | null> {
+    const session = await mongoose.startSession();
+    let createdUser: UserInterface | null = null;
+
     try {
-      const { email, name, phoneNumber, password, confirmPassword } = userData;
-      const isValid = SignUpValidation(
-        name,
-        phoneNumber.toString(),
-        email,
-        password,
-        confirmPassword
+      await session.withTransaction(
+        async () => {
+          const { email, name, phoneNumber, password, confirmPassword } =
+            userData;
+          const isValid = SignUpValidation(
+            name,
+            phoneNumber.toString(),
+            email,
+            password,
+            confirmPassword
+          );
+
+          if (!isValid) {
+            throw new Error("Invalid user data");
+          }
+
+          const userExists = await this._userRepository.emailExistCheck(
+            { email },
+            session
+          );
+          if (userExists) {
+            throw new Error("Email already exists");
+          }
+
+          const secret_key: string | undefined = process.env.CRYPTR_SECRET_KEY;
+          if (!secret_key) {
+            throw new Error(
+              "Encryption secret key is not defined in the environment"
+            );
+          }
+
+          const cryptr = new Cryptr(secret_key, {
+            encoding: "base64",
+            pbkdf2Iterations: 10000,
+            saltLength: 10,
+          });
+
+          const newPassword = cryptr.encrypt(password as string);
+          const newDetails: INewDetails = {
+            name: name as string,
+            password: newPassword as string,
+            email: email as string,
+            phoneNumber: phoneNumber,
+          };
+
+          const user = await this._userRepository.saveUser(newDetails, session);
+          if (!user) {
+            throw new Error("Failed to create user");
+          }
+          createdUser = user;
+
+          const wallet = await this._walletRepository.createWallet(
+            {
+              userId: user._id,
+              balance: 0, // paise
+              currency: "INR",
+            },
+            session
+          );
+
+          if (!wallet) throw new Error("Failed to create wallet");
+          await this._userRepository.setWalletId(
+            user._id.toString(),
+            wallet._id.toString(),
+            session
+          );
+        },
+        {
+          readConcern: { level: "local" },
+          writeConcern: { w: "majority" },
+        }
       );
 
-      if (!isValid) {
-        throw new Error("Invalid user data");
+      if (!createdUser) {
+        throw new Error("User creation ended without result");
       }
 
-      const userExists = await this._userRepository.emailExistCheck({ email });
-      if (userExists) {
-        throw new Error("Email already exists");
-      }
+      const userResult = createdUser as UserInterface;
+      const id = userResult._id.toString();
+      const access_token = this._createJWT.generateAccessToken(
+        id,
+        userResult.role
+      );
+      const refresh_token = this._createJWT.generateRefreshToken(id);
 
-      const secret_key: string | undefined = process.env.CRYPTR_SECRET_KEY;
-      if (!secret_key) {
-        throw new Error(
-          "Encryption secret key is not defined in the environment"
-        );
-      }
-
-      const cryptr = new Cryptr(secret_key, {
-        encoding: "base64",
-        pbkdf2Iterations: 10000,
-        saltLength: 10,
-      });
-
-      const newPassword = cryptr.encrypt(password as string);
-      const newDetails: INewDetails = {
-        name: name as string,
-        password: newPassword as string,
-        email: email as string,
-        phoneNumber: phoneNumber,
+      return {
+        success: true,
+        message: "user signup successful",
+        data: userResult,
+        access_token,
+        refresh_token,
       };
-
-      const response = await this._userRepository.saveUser(newDetails);
-
-      if (response && response.role) {
-        const id = response._id.toString();
-        const access_token = this._createJWT.generateAccessToken(
-          id,
-          response.role
-        );
-        const refresh_token = this._createJWT.generateRefreshToken(id);
-
-        return {
-          success: true,
-          message: "user singup successfull",
-          data: response,
-          access_token: access_token,
-          refresh_token: refresh_token,
-        };
-      } else {
-        return {
-          success: true,
-          message: "user singup successfull",
-          data: null,
-        };
-      }
-    } catch (error) {
-      console.log("Error in signup in the userAuthService", error);
-      throw error;
+    } catch (err: any) {
+      console.error("Error in signup in the userAuthService", err);
+      throw err;
+    } finally {
+      session.endSession();
     }
   }
-
   async login(data: IUserLogin): Promise<IUserLoginResponse | null> {
     try {
       const { email, password } = data;
@@ -177,4 +214,4 @@ class UserAuthService implements IUserAuthService {
     }
   }
 }
-export default UserAuthService;
+export default AuthService;

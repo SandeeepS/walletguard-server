@@ -1,4 +1,4 @@
-import type { IUserService } from "../../interfaces/services/IUserService";
+import type { IUserService } from "../../interfaces/services/IService";
 
 class UserService implements IUserService{
     constructor(){
