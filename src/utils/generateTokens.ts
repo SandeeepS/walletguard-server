@@ -1,4 +1,3 @@
-import type { Response } from "express";
 import type { JwtPayload, Secret } from "jsonwebtoken";
 import dotenv from "dotenv";
 
@@ -12,36 +11,19 @@ interface VerifyResult {
 }
 
 export interface ICreateJWT {
-  generateAccessToken(payload: string, role: string): string;
-  generateRefreshToken(payload: string): string;
+  generateToken(id:string): string;
   verifyToken(token: string): VerifyResult;
-  verifyRefreshToken(token: string, res: Response): VerifyResult;
 }
 
 export class CreateJWT implements ICreateJWT {
-  generateAccessToken(payload: string, role: string): string {
-    if (!payload) {
-      throw new Error("Payload is required for token generation");
+  generateToken(id: string): string {
+    if (!id) {
+      throw new Error("id is required for token generation");
     }
-    const token = jwt.sign(
-      { data: payload, role: role },
-      process.env.JWT_SECRET as Secret,
-      {
-        expiresIn: "1m",
-      }
-    );
+    const token = jwt.sign({ id: id }, process.env.JWT_SECRET as Secret, {
+      expiresIn: "1h",
+    });
     return token;
-  }
-
-  generateRefreshToken(payload: string): string {
-    if (!payload) {
-      throw new Error("Payload is required for refresh token generation");
-    }
-    return jwt.sign(
-      { data: payload },
-      process.env.JWT_REFRESH_SECRET as Secret,
-      { expiresIn: "48h" }
-    );
   }
 
   verifyToken(token: string): VerifyResult {
@@ -55,27 +37,6 @@ export class CreateJWT implements ICreateJWT {
     } catch (error) {
       console.error("Error while verifying access JWT token:", error);
       return { success: false, message: "Access Token Expired!" };
-    }
-  }
-  verifyRefreshToken(token: string, res: Response): VerifyResult {
-    try {
-      const secret = process.env.JWT_REFRESH_SECRET as Secret;
-      if (!secret) {
-        throw new Error("JWT_REFRESH_SECRET is not defined");
-      }
-      const decoded = jwt.verify(token, secret) as JwtPayload;
-      console.log("decoded data from the jwt.varify fucniton ", decoded);
-      return { success: true, decoded, message: "verified" };
-    } catch (error) {
-      console.error("Error while verifying refresh token:", error);
-      if (error instanceof jwt.TokenExpiredError) {
-        res.clearCookie("access_token");
-        res.clearCookie("refresh_token");
-        return { success: false, message: "Refresh Token Expired!" };
-      }
-      res.clearCookie("access_token");
-      res.clearCookie("refresh_token");
-      return { success: false, message: "Internal server error" };
     }
   }
 }

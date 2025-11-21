@@ -3,7 +3,14 @@ import type { IUserService } from "../../interfaces/services/IService";
 import { STATUS_CODES } from "../../constants/httpStatusCodes";
 import type { IAuthController } from "../../interfaces/controllers/IAuthController";
 import type { IAuthService } from "../../interfaces/services/IAuthService";
+
 const { BAD_REQUEST, OK, UNAUTHORIZED, NOT_FOUND } = STATUS_CODES;
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
 
 class AuthController implements IAuthController {
   constructor(
@@ -17,63 +24,44 @@ class AuthController implements IAuthController {
       console.log("userDetails from the frontend is.", userData);
 
       const result = await this._userAuthService.signup(userData);
-      console.log("result of the newely registered user is ", result);
+      console.log("result of the newly registered user is ", result);
+
       if (result && result.success) {
-        const accessTokenMaxAge = 15 * 60 * 1000; // 15 minutes
-        const refreshTokenMaxAge = 48 * 60 * 60 * 1000; // 48 hours
+        const tokenMaxAge = 15 * 60 * 1000; // 15 minutes
 
         res
-          .status(200)
-          .cookie("user_access_token", result.access_token, {
-            maxAge: accessTokenMaxAge,
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-          })
-          .cookie("user_refresh_token", result.refresh_token, {
-            maxAge: refreshTokenMaxAge,
+          .status(OK)
+          .cookie("token", result.token, {
+            maxAge: tokenMaxAge,
             httpOnly: true,
             secure: true,
             sameSite: "none",
           })
           .json({
             success: true,
-            message: result.message,
-            userId: result.data?._id,
-            data: result.data,
-          });
+            message: result.message || "User registered successfully",
+            data: {
+              userId: result.data?._id,
+              user: result.data,
+            },
+          } as ApiResponse);
       } else {
-        res.status(200).json({
+        res.status(OK).json({
           success: false,
-          message: result?.message,
-        });
+          message: result?.message || "Registration failed",
+          data: null,
+        } as ApiResponse);
       }
     } catch (error) {
       console.log(error as Error);
-
-      const err = error as Error;
-      if (err.message === "Invalid user data") {
-        res.status(400).json({ success: false, message: "Invalid user data" });
-      } else if (err.message === "Email already exists") {
-        res
-          .status(409)
-          .json({ success: false, message: "Email already exists" });
-      } else if (err.message === "Failed to generate OTP") {
-        res
-          .status(500)
-          .json({ success: false, message: "Failed to generate OTP" });
-      } else {
-        res
-          .status(500)
-          .json({ success: false, message: "An unexpected error occurred" });
-      }
       next(error);
     }
   }
 
-  async login(req: Request, res: Response, next: NextFunction) {
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password }: { email: string; password: string } = req.body;
+
       const loginStatus = await this._userAuthService.login({
         email,
         password,
@@ -82,44 +70,57 @@ class AuthController implements IAuthController {
 
       console.log("user login status:", loginStatus);
 
-      if (loginStatus && loginStatus.success === false) {
+      if (!loginStatus || loginStatus.success === false) {
         res.status(OK).json({
-          data: {
-            success: false,
-            message: loginStatus.message,
-          },
-        });
+          success: false,
+          message: loginStatus?.message || "Login failed",
+          data: null,
+        } as ApiResponse);
         return;
-      } else {
-        const access_token = loginStatus?.token;
-        const refresh_token = loginStatus?.refresh_token;
-        const accessTokenMaxAge = 5 * 60 * 1000; //5 min
-        const refreshTokenMaxAge = 48 * 60 * 60 * 1000; //48 h
-        console.log("response is going to send to the frontend");
-        res
-          .status(200)
-          .cookie("user_access_token", access_token, {
-            maxAge: accessTokenMaxAge,
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-          })
-          .cookie("user_refresh_token", refresh_token, {
-            maxAge: refreshTokenMaxAge,
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-          })
-          .json(loginStatus);
       }
-      if (loginStatus) {
-        return loginStatus;
-      } else {
-        return null;
-      }
+
+      const token = loginStatus.token;
+      const tokenMaxAge = 5 * 60 * 1000; // 5 min
+
+      console.log("response is going to send to the frontend");
+
+      res
+        .status(OK)
+        .cookie("token", token, {
+          maxAge: tokenMaxAge,
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .json({
+          success: true,
+          message: loginStatus.message || "Login successful",
+          data: loginStatus.data,
+        } as ApiResponse);
     } catch (error) {
       console.log(error as Error);
       next(error);
+    }
+  }
+
+  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      console.log("Entered in the function for logout");
+
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
+
+      res.status(OK).json({
+        success: true,
+        message: "User logged out successfully",
+        data: null,
+      } as ApiResponse);
+    } catch (err) {
+      console.log(err);
+      next(err);
     }
   }
 }

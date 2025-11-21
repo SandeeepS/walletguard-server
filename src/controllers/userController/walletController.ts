@@ -2,105 +2,195 @@ import type { NextFunction, Request, Response } from "express";
 import type { IWalletController } from "../../interfaces/controllers/IWalletController";
 import { toPaise } from "../../utils/toPaise";
 import type { IWalletService } from "../../interfaces/services/IWalletService";
+import { STATUS_CODES } from "../../constants/httpStatusCodes";
+
+const { OK, BAD_REQUEST, UNAUTHORIZED, NOT_FOUND } = STATUS_CODES;
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
 
 class WalletController implements IWalletController {
   constructor(private _walletService: IWalletService) {
     this._walletService = _walletService;
   }
 
-  async deposit(req: Request, res: Response, next: NextFunction) {
+  async deposit(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
-      const { userId } = req.body;
-      if (!userId)
-        return res
-          .status(401)
-          .json({ success: false, message: "Unauthorized" });
+      const { userId, amount } = req.body;
 
-      const { amount } = req.body;
+      if (!userId) {
+        res.status(UNAUTHORIZED).json({
+          success: false,
+          message: "Unauthorized User ID is required",
+          data: null,
+        } as ApiResponse);
+        return;
+      }
+
       const amountNum = Number(amount);
       if (!Number.isFinite(amountNum) || amountNum <= 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid amount" });
+        res.status(BAD_REQUEST).json({
+          success: false,
+          message: "Invalid amount! Amount must be a positive number",
+          data: null,
+        } as ApiResponse);
+        return;
       }
 
       const amountPaise = toPaise(amountNum);
-
       const transaction = await this._walletService.deposit(
         userId,
         amountPaise
       );
 
-      return res.status(200).json({ success: true, transaction: transaction });
+      if (!transaction) {
+        res.status(BAD_REQUEST).json({
+          success: false,
+          message: "Deposit failed",
+          data: null,
+        } as ApiResponse);
+        return;
+      }
+
+      res.status(OK).json({
+        success: true,
+        message: "Amount deposited successfully",
+        data: transaction,
+      } as ApiResponse);
     } catch (err: any) {
       next(err);
     }
   }
 
-  async withdraw(req: Request, res: Response, next: NextFunction) {
+  async withdraw(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { userId, amount } = req.body;
       console.log("userId and amount in the walletController ", userId, amount);
 
       if (!userId) {
-        return res
-          .status(401)
-          .json({ success: false, message: "Unauthorized" });
+        res.status(UNAUTHORIZED).json({
+          success: false,
+          message: "Unauthorized,User ID is required",
+          data: null,
+        } as ApiResponse);
+        return;
       }
 
       const amountNumber = Number(amount);
       if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid amount" });
+        res.status(BAD_REQUEST).json({
+          success: false,
+          message: "Invalid amount,Amount must be a positive number",
+          data: null,
+        } as ApiResponse);
+        return;
       }
 
       const response = await this._walletService.withdraw(userId, amountNumber);
 
-      if (response) {
-        return res.status(200).json({ success: true, data: response });
+      if (!response) {
+        res.status(BAD_REQUEST).json({
+          success: false,
+          message: "Withdrawal failed,Insufficient funds or wallet not found",
+          data: null,
+        } as ApiResponse);
+        return;
       }
-      return res.status(400).json({
-        success: false,
-        message: "Withdrawal failed (insufficient funds or wallet not found)",
-      });
+
+      res.status(OK).json({
+        success: true,
+        message: "Amount withdrawn successfully",
+        data: response,
+      } as ApiResponse);
     } catch (err) {
       next(err);
     }
   }
 
-  async balance(req: Request, res: Response, next: NextFunction) {
+  async balance(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { userId } = req.query;
-      const result = await this._walletService.getBalance(userId as string);
-      if (!result) {
-        return res.status(404).json({
+
+      if (!userId) {
+        res.status(BAD_REQUEST).json({
           success: false,
-          message: "Wallet not found",
-        });
+          message: "User ID is required",
+          data: null,
+        } as ApiResponse);
+        return;
       }
 
-      res.status(200).json({
+      const result = await this._walletService.getBalance(userId as string);
+
+      if (!result) {
+        res.status(NOT_FOUND).json({
+          success: false,
+          message: "Wallet not found",
+          data: null,
+        } as ApiResponse);
+        return;
+      }
+
+      res.status(OK).json({
         success: true,
         message: "Balance retrieved successfully",
         data: result,
-      });
+      } as ApiResponse);
     } catch (error) {
       next(error);
     }
   }
 
-  async getTransactionHistory(req: Request, res: Response, next: NextFunction) {
+  async getTransactionHistory(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { userId } = req.query;
+
+      if (!userId) {
+        res.status(BAD_REQUEST).json({
+          success: false,
+          message: "User ID is required",
+          data: null,
+        } as ApiResponse);
+        return;
+      }
+
       const result = await this._walletService.getTransactionHistory(
         userId as string
       );
-      if (result) {
-        res
-          .status(200)
-          .json({ success: true, message: "History found  ", data: result });
+
+      if (!result || (Array.isArray(result) && result.length === 0)) {
+        res.status(NOT_FOUND).json({
+          success: false,
+          message: "No transaction history found",
+          data: null,
+        } as ApiResponse);
+        return;
       }
+
+      res.status(OK).json({
+        success: true,
+        message: "Transaction history retrieved successfully",
+        data: result,
+      } as ApiResponse);
     } catch (error) {
       next(error);
     }

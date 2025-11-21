@@ -28,7 +28,7 @@ class WalletService implements IWalletService {
     const transactionId = uuidv4();
     const session = await mongoose.startSession();
     try {
-      let createdTx: TransactionInterface | null = null;
+      let createdTransaction: TransactionInterface | null = null;
       await session.withTransaction(
         async () => {
           const existing =
@@ -56,7 +56,7 @@ class WalletService implements IWalletService {
 
           const balanceAfter = updatedWallet.balance;
 
-          const txPayload: Partial<TransactionInterface> = {
+          const transactionPayload: Partial<TransactionInterface> = {
             transactionId,
             userId: (walletBefore.userId as any).toString(),
             walletId: (updatedWallet._id as any).toString(),
@@ -67,10 +67,11 @@ class WalletService implements IWalletService {
             status: "SUCCESS",
           };
 
-          createdTx = await this._transactionRepository.createTransaction(
-            txPayload,
-            session
-          );
+          createdTransaction =
+            await this._transactionRepository.createTransaction(
+              transactionPayload,
+              session
+            );
         },
         {
           readConcern: { level: "local" },
@@ -78,9 +79,9 @@ class WalletService implements IWalletService {
         }
       );
 
-      if (!createdTx)
+      if (!createdTransaction)
         throw new Error("Deposit transaction failed unexpectedly");
-      return createdTx;
+      return createdTransaction;
     } catch (err: any) {
       if (err.code === 11000 || err) {
         const existing = await this._transactionRepository.findByTransactionId(
