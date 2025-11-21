@@ -33,80 +33,76 @@ class WalletController implements IWalletController {
 
       return res.status(200).json({ success: true, transaction: transaction });
     } catch (err: any) {
-      if (err)
-        return res.status(400).json({ success: false, message: err.message });
-      if (err) {
-        return res
-          .status(409)
-          .json({ success: false, message: "Duplicate transaction" });
-      }
       next(err);
     }
   }
 
-async withdraw(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { userId, amount } = req.body;
-    console.log("userId and amount in the walletController ", userId, amount);
+  async withdraw(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId, amount } = req.body;
+      console.log("userId and amount in the walletController ", userId, amount);
 
-    if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
+      }
+
+      const amountNumber = Number(amount);
+      if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid amount" });
+      }
+
+      const response = await this._walletService.withdraw(userId, amountNumber);
+
+      if (response) {
+        return res.status(200).json({ success: true, data: response });
+      }
+      return res.status(400).json({
+        success: false,
+        message: "Withdrawal failed (insufficient funds or wallet not found)",
+      });
+    } catch (err) {
+      next(err);
     }
-
-    const amountNumber = Number(amount);
-    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid amount" });
-    }
-
-
-    const response = await this._walletService.withdraw(userId, amountNumber);
-
-    if (response) {
-      return res.status(200).json({ success: true, data: response });
-    }
-    return res.status(400).json({
-      success: false,
-      message: "Withdrawal failed (insufficient funds or wallet not found)",
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("withdraw handler error:", err);
-    return res.status(500).json({ success: false, message });
   }
-}
-
 
   async balance(req: Request, res: Response, next: NextFunction) {
     try {
       const { userId } = req.query;
       const result = await this._walletService.getBalance(userId as string);
-      if (result) {
-        res
-          .status(200)
-          .json({ success: true, message: "balance found ", data: result });
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          message: "Wallet not found",
+        });
       }
+
+      res.status(200).json({
+        success: true,
+        message: "Balance retrieved successfully",
+        data: result,
+      });
     } catch (error) {
-      if (error) {
-        res.status(402).json({ success: false, message: error });
-      }
-      res.status(500).json({ success: false, message: "Server error" });
+      next(error);
     }
   }
 
   async getTransactionHistory(req: Request, res: Response, next: NextFunction) {
     try {
       const { userId } = req.query;
-      const result = await this._walletService.getTransactionHistory(userId as string);
+      const result = await this._walletService.getTransactionHistory(
+        userId as string
+      );
       if (result) {
         res
           .status(200)
           .json({ success: true, message: "History found  ", data: result });
       }
     } catch (error) {
-      if (error) {
-        res.status(402).json({ success: false, message: error });
-      }
-      res.status(500).json({ success: false, message: "Server error" });
+      next(error);
     }
   }
 }

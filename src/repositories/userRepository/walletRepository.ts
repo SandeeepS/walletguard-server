@@ -23,42 +23,15 @@ class WalletRepository
     userId: string,
     session?: ClientSession
   ): Promise<WalletInterface | null> {
-    try {
-      console.log(
-        "userId in the findByUserId ind the walletRepository",
-        userId
-      );
-      const wallet = this.findOne({ userId: userId } as any, session);
-      return wallet;
-    } catch (error) {
-      console.log(
-        "error in the walletRepository while getting the waller by userId",
-        error
-      );
-      throw error;
-    }
+    return this.findOne({ userId: userId } as any, session);
   }
 
   async getWalletDetails(
     walletId: string,
     session?: ClientSession
   ): Promise<WalletInterface | null> {
-    try {
-      console.log(
-        "walletId in the getWalletDetails in the walletRepository",
-        walletId
-      );
-      const newWalletId = new mongoose.Types.ObjectId(walletId);
-      const wallet = await this.findOne({ _id: newWalletId }, session);
-      console.log("walet in the walletReposdjfnsdkfnksdfkjsdfnksfn", wallet);
-      return wallet;
-    } catch (error) {
-      console.log(
-        "error in the walletRepository while getting the waller by walletID",
-        error
-      );
-      throw error;
-    }
+    const newWalletId = new mongoose.Types.ObjectId(walletId);
+    return await this.findOne({ _id: newWalletId }, session);
   }
 
   async incrementBalance(
