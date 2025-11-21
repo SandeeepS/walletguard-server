@@ -17,7 +17,6 @@ class TransactionRepository
     payload: Partial<TransactionInterface>,
     session?: ClientSession
   ): Promise<TransactionInterface | null> {
-    // Ensure transactionId exists before saving (caller should provide or generate)
     if (!payload.transactionId) {
       throw new Error("transactionId is required");
     }
@@ -31,21 +30,10 @@ class TransactionRepository
     return this.findOne({ transactionId } as any, session);
   }
 
-  //   async findByIdempotencyKey(idempotencyKey: string, session?: ClientSession) {
-  //     return this.findOne({ idempotencyKey } as any, session);
-  //   }
-
-  async getHistory(userId:string):Promise<TransactionInterface [] | null>{
-    try{
-        const newUserId = new mongoose.Types.ObjectId(userId);
-        const filter = {userId:newUserId};
-        const transactions = await this.find(filter)
-        console.log("transactions are ",transactions);
-        return transactions
-    }catch(error){
-        console.log("error occured in getHistory in transactionRepo",error);
-        throw error
-    }
+  async getHistory(userId: string): Promise<TransactionInterface[] | null> {
+    const newUserId = new mongoose.Types.ObjectId(userId);
+    const filter = { userId: newUserId };
+    return await this.find(filter);
   }
 }
 

@@ -25,27 +25,21 @@ class WalletService implements IWalletService {
     if (!Number.isFinite(amountPaise) || amountPaise <= 0) {
       throw new Error("Amount must be a positive number (in paise).");
     }
-
     const transactionId = uuidv4();
     const session = await mongoose.startSession();
-
     try {
-      let createdTx: TransactionInterface | null = null;
-
+      let createdTransaction: TransactionInterface | null = null;
       await session.withTransaction(
         async () => {
-          // idempotency: if transaction with same transactionId already exists, throw IdempotencyError
           const existing =
             await this._transactionRepository.findByTransactionId(
               transactionId,
               session
             );
           if (existing) {
-            // return existing transaction after transaction finishes (abort)
             throw new Error("Transaction already processed");
           }
 
-          // get wallet (must exist)
           const walletBefore = await this._walletRepository.findByUserId(
             userId,
             session
@@ -53,8 +47,6 @@ class WalletService implements IWalletService {
           if (!walletBefore) throw new Error("Wallet not found");
 
           const balanceBefore = walletBefore.balance;
-
-          // increment balance atomically
           const updatedWallet = await this._walletRepository.incrementBalance(
             userId,
             amountPaise,
@@ -64,8 +56,7 @@ class WalletService implements IWalletService {
 
           const balanceAfter = updatedWallet.balance;
 
-          // create transaction record in same session
-          const txPayload: Partial<TransactionInterface> = {
+          const transactionPayload: Partial<TransactionInterface> = {
             transactionId,
             userId: (walletBefore.userId as any).toString(),
             walletId: (updatedWallet._id as any).toString(),
@@ -76,10 +67,11 @@ class WalletService implements IWalletService {
             status: "SUCCESS",
           };
 
-          createdTx = await this._transactionRepository.createTransaction(
-            txPayload,
-            session
-          );
+          createdTransaction =
+            await this._transactionRepository.createTransaction(
+              transactionPayload,
+              session
+            );
         },
         {
           readConcern: { level: "local" },
@@ -87,14 +79,11 @@ class WalletService implements IWalletService {
         }
       );
 
-      // if committed, createdTx should be set
-      if (!createdTx)
+      if (!createdTransaction)
         throw new Error("Deposit transaction failed unexpectedly");
-      return createdTx;
+      return createdTransaction;
     } catch (err: any) {
-      // handle duplicate-key (someone else created transaction) as idempotent success
       if (err.code === 11000 || err) {
-        // find and return existing tx
         const existing = await this._transactionRepository.findByTransactionId(
           transactionId
         );
@@ -180,16 +169,8 @@ class WalletService implements IWalletService {
   async getTransactionHistory(
     userId: string
   ): Promise<TransactionInterface[] | null> {
-    try {
-      const result = await this._transactionRepository.getHistory(userId);
-      return result;
-    } catch (error) {
-      console.log(
-        "error occured while getting the history in the walletService form getTransactionHistory funciton",
-        error
-      );
-      throw error;
-    }
+    const result = await this._transactionRepository.getHistory(userId);
+    return result;
   }
 }
 

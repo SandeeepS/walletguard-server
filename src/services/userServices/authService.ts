@@ -34,6 +34,19 @@ class AuthService implements IAuthService {
     let createdUser: UserInterface | null = null;
 
     try {
+      const { email } = userData;
+      const userExists = await this._userRepository.emailExistCheck(
+        { email },
+        session
+      );
+      if (userExists) {
+        console.log("Email already exists");
+        return {
+          success: false,
+          message: "Email already exists",
+        };
+      }
+
       await session.withTransaction(
         async () => {
           const { email, name, phoneNumber, password, confirmPassword } =
@@ -48,14 +61,6 @@ class AuthService implements IAuthService {
 
           if (!isValid) {
             throw new Error("Invalid user data");
-          }
-
-          const userExists = await this._userRepository.emailExistCheck(
-            { email },
-            session
-          );
-          if (userExists) {
-            throw new Error("Email already exists");
           }
 
           const secret_key: string | undefined = process.env.CRYPTR_SECRET_KEY;
@@ -113,18 +118,13 @@ class AuthService implements IAuthService {
 
       const userResult = createdUser as UserInterface;
       const id = userResult._id.toString();
-      const access_token = this._createJWT.generateAccessToken(
-        id,
-        userResult.role
-      );
-      const refresh_token = this._createJWT.generateRefreshToken(id);
+      const token = this._createJWT.generateToken(id);
 
       return {
         success: true,
         message: "user signup successful",
         data: userResult,
-        access_token,
-        refresh_token,
+        token,
       };
     } catch (err: any) {
       console.error("Error in signup in the userAuthService", err);
@@ -159,13 +159,7 @@ class AuthService implements IAuthService {
 
               if (passwordMatch) {
                 const userId = user._id.toString();
-                const token = this._createJWT.generateAccessToken(
-                  userId,
-                  user.role
-                );
-                const refreshToken =
-                  this._createJWT.generateRefreshToken(userId);
-                console.log("user is exist", user);
+                const token = this._createJWT.generateToken(userId);
 
                 const filteredUser = {
                   id: user._id.toString(),
@@ -179,7 +173,6 @@ class AuthService implements IAuthService {
                   message: "Authentication Successful !",
                   data: filteredUser,
                   token: token,
-                  refresh_token: refreshToken,
                 };
               } else {
                 console.log("Incorrect password");
