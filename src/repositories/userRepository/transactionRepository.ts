@@ -5,6 +5,7 @@ import transactionModel from "../../models/transactionModel";
 import { BaseRepository } from "../baseRepository/baseRepository";
 import mongoose from "mongoose";
 
+//repository layer for transaction database operations 
 class TransactionRepository
   extends BaseRepository<TransactionInterface>
   implements ITransactionRepository

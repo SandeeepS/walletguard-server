@@ -8,6 +8,7 @@ import type { IUserRepository } from "../../interfaces/repositories/IUserReposit
 import userModel from "../../models/userModel";
 import { BaseRepository } from "../baseRepository/baseRepository";
 
+//repository layer for handling user database operations 
 class UserRepository
   extends BaseRepository<UserInterface>
   implements IUserRepository

@@ -16,6 +16,8 @@ import mongoose from "mongoose";
 import type { IWalletRepository } from "../../interfaces/repositories/IWalletRepository";
 import type { IAuthService } from "../../interfaces/services/IAuthService";
 
+
+//service layer for handling user  authentication  
 class AuthService implements IAuthService {
   constructor(
     private _userRepository: IUserRepository,
@@ -93,7 +95,7 @@ class AuthService implements IAuthService {
           const wallet = await this._walletRepository.createWallet(
             {
               userId: user._id,
-              balance: 0, // paise
+              balance: 0, // paise is used to store 
               currency: "INR",
             },
             session

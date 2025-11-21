@@ -7,6 +7,8 @@ import type { IWalletRepository } from "../../interfaces/repositories/IWalletRep
 import type { WalletInterface } from "../../interfaces/models/IWallet";
 import type { IUserRepository } from "../../interfaces/repositories/IUserRepository";
 
+
+// this serviec layer is for wallet operations
 class WalletService implements IWalletService {
   constructor(
     private _transactionRepository: ITransactionRepository,
@@ -126,7 +128,6 @@ class WalletService implements IWalletService {
           amountPaise,
           session
         );
-        console.log("upedfasdfsda", updated);
         if (!updated) throw new Error("Insufficient balance");
 
         const after = updated.balance;
@@ -156,6 +157,7 @@ class WalletService implements IWalletService {
     }
   }
 
+  //for getting the balace amount 
   async getBalance(
     userId: string
   ): Promise<{ balance: number; currency: string } | null> {
@@ -166,6 +168,8 @@ class WalletService implements IWalletService {
     return { balance: balanceInRupees, currency: wallet.currency };
   }
 
+
+  //for gettin the transaction history of the user 
   async getTransactionHistory(
     userId: string
   ): Promise<TransactionInterface[] | null> {

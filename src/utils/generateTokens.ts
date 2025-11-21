@@ -16,6 +16,8 @@ export interface ICreateJWT {
 }
 
 export class CreateJWT implements ICreateJWT {
+
+ //generating token here 
   generateToken(id: string): string {
     if (!id) {
       throw new Error("id is required for token generation");
@@ -26,6 +28,7 @@ export class CreateJWT implements ICreateJWT {
     return token;
   }
 
+  //for verifying the the token
   verifyToken(token: string): VerifyResult {
     try {
       const secret = process.env.JWT_SECRET as Secret;

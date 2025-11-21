@@ -12,6 +12,7 @@ interface ApiResponse<T = any> {
   data?: T;
 }
 
+// wallet controller for handling the wallet operations 
 class WalletController implements IWalletController {
   constructor(private _walletService: IWalletService) {
     this._walletService = _walletService;
@@ -24,11 +25,11 @@ class WalletController implements IWalletController {
   ): Promise<void> {
     try {
       const { userId, amount } = req.body;
-
+      console.log("userId and amount from deposit in the walletControll is ",userId,amount);
       if (!userId) {
         res.status(UNAUTHORIZED).json({
           success: false,
-          message: "Unauthorized User ID is required",
+          message: "Unauthorized! User id is required",
           data: null,
         } as ApiResponse);
         return;
@@ -49,6 +50,7 @@ class WalletController implements IWalletController {
         userId,
         amountPaise
       );
+
 
       if (!transaction) {
         res.status(BAD_REQUEST).json({
@@ -77,7 +79,6 @@ class WalletController implements IWalletController {
     try {
       const { userId, amount } = req.body;
       console.log("userId and amount in the walletController ", userId, amount);
-
       if (!userId) {
         res.status(UNAUTHORIZED).json({
           success: false,
@@ -129,7 +130,7 @@ class WalletController implements IWalletController {
       if (!userId) {
         res.status(BAD_REQUEST).json({
           success: false,
-          message: "User ID is required",
+          message: "User id is required",
           data: null,
         } as ApiResponse);
         return;
@@ -156,6 +157,7 @@ class WalletController implements IWalletController {
     }
   }
 
+  //to get transaction history
   async getTransactionHistory(
     req: Request,
     res: Response,
