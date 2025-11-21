@@ -4,8 +4,7 @@ export interface IUserSingupResponse {
   success: boolean;
   message: string;
   data?: IUserSignupDataResponse | null;
-  access_token?: string;
-  refresh_token?: string;
+  token?: string;
 }
 
 export interface IUserSignupDataResponse {
