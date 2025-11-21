@@ -1,6 +1,9 @@
+
+//here validating the user credential from the backend
+
+
 function isValidEmail(email: string) {
-  // Regular expression for a simple email validation
-  const emailRegex = /^[^\s@]+@gmail\.com$/;
+  const emailRegex = /^[^\s@]+@gmail\.com$/; // email regular expression
   return emailRegex.test(email);
 }
 
@@ -12,7 +15,7 @@ function checkWhiteSpace(s: string) {
 const Phoneregx = /^[0-9]{10}$/;
 
 
-
+// for vaidating login details 
 export const LoginValidation = (email: string, password: string): boolean => {
   console.log(
     "email and password for validating in the validator funciton",
@@ -44,7 +47,7 @@ export const LoginValidation = (email: string, password: string): boolean => {
   return true;
 };
 
-
+// for validationg signup details 
 export const SignUpValidation = (
   name: string,
   phone: string,

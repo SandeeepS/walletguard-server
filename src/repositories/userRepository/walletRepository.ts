@@ -5,6 +5,7 @@ import walletModel from "../../models/walletModel";
 import { BaseRepository } from "../baseRepository/baseRepository";
 import mongoose from "mongoose";
 
+//repository layer for wallet database operations 
 class WalletRepository
   extends BaseRepository<WalletInterface>
   implements IWalletRepository
@@ -12,6 +13,7 @@ class WalletRepository
   constructor() {
     super(walletModel);
   }
+  
   async createWallet(
     payload: Partial<WalletInterface>,
     session?: ClientSession

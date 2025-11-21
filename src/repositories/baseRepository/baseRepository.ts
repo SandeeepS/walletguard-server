@@ -3,6 +3,7 @@ import type { UpdateQuery } from "mongoose";
 
 export interface IBaseRepository<T> {}
 
+//abstract base repository which provides reusable database operations.
 export abstract class BaseRepository<T> implements IBaseRepository<T> {
   private model: Model<T>;
 
@@ -18,9 +19,11 @@ export abstract class BaseRepository<T> implements IBaseRepository<T> {
     return created[0] as unknown as T;
   }
 
-
-  async find(filter:Partial<T> ,session?:ClientSession):Promise<T []|null>{
-    return await this.model.find(filter).session(session??null).exec() as T [];
+  async find(filter: Partial<T>, session?: ClientSession): Promise<T[] | null> {
+    return (await this.model
+      .find(filter)
+      .session(session ?? null)
+      .exec()) as T[];
   }
   async findOne(
     filter: Partial<T>,
