@@ -12,22 +12,21 @@ interface ApiResponse<T = any> {
   data?: T;
 }
 
+//  controllr for handling user authentications 
 class AuthController implements IAuthController {
   constructor(
     private _userAuthService: IAuthService,
-    private _userServices: IUserService
   ) {}
 
+  
   async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userData = req.body;
-      console.log("userDetails from the frontend is.", userData);
-
       const result = await this._userAuthService.signup(userData);
       console.log("result of the newly registered user is ", result);
 
       if (result && result.success) {
-        const tokenMaxAge = 15 * 60 * 1000; // 15 minutes
+        const tokenMaxAge = 15 * 60 * 1000; // setting  15 minutes 
 
         res
           .status(OK)
@@ -80,10 +79,7 @@ class AuthController implements IAuthController {
       }
 
       const token = loginStatus.token;
-      const tokenMaxAge = 5 * 60 * 1000; // 5 min
-
-      console.log("response is going to send to the frontend");
-
+      const tokenMaxAge = 5 * 60 * 1000; // setting  5 min
       res
         .status(OK)
         .cookie("token", token, {
@@ -103,10 +99,9 @@ class AuthController implements IAuthController {
     }
   }
 
+  //logout function for clearing the cookiee
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log("Entered in the function for logout");
-
       res.clearCookie("token", {
         httpOnly: true,
         secure: true,

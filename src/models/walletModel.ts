@@ -1,6 +1,8 @@
 import mongoose, { Model, Schema } from "mongoose";
 import type { WalletInterface } from "../interfaces/models/IWallet";
 
+
+//schema for wallet 
 const walletSchema: Schema<WalletInterface> = new Schema(
   {
     userId: {

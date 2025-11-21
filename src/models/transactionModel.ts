@@ -1,6 +1,8 @@
 import mongoose, { Model, Schema } from "mongoose";
 import type { TransactionInterface } from "../interfaces/models/ITransaction";
 
+
+//schema for transactions 
 const transactionSchema: Schema<TransactionInterface> = new Schema(
   {
     transactionId: {

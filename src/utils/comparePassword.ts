@@ -22,7 +22,7 @@ class Encrypt implements IEncrypt {
     });
   }
 
-  // Encrypting the password instead of hashing
+  //encrypting password
   async hashPassword(password: string): Promise<string> {
     try {
       const encryptedPassword = this.cryptr.encrypt(password);
@@ -33,7 +33,7 @@ class Encrypt implements IEncrypt {
     }
   }
 
-  // Decrypting the hashed password and comparing it with the plain text password
+  //decrypting password for comparing
   async compare(password: string, hashedPassword: string): Promise<boolean> {
     try {
       const decryptedPassword = this.cryptr.decrypt(hashedPassword);
